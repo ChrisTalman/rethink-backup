@@ -1,0 +1,22 @@
+{
+    "compilerOptions":
+    {
+        "target": "es2017",
+        "module": "ES6",
+        "moduleResolution": "node",
+        "baseUrl": "./",
+        "outDir": "./build/",
+		"lib":
+		[
+			"es2017"
+		],
+        "removeComments": true,
+        "downlevelIteration": true,
+        "alwaysStrict": true,
+        "watch": true
+    },
+    "include":
+    [
+        "src/**/*"
+    ]
+}
