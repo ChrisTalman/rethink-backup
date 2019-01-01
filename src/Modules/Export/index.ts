@@ -42,6 +42,7 @@ async function exportDatabases(options: Options)
     const exportId = ulid();
     const exportName = 'rethinkdb_export_' + exportId;
     const directoryPath = await createDirectory({name: exportName});
+    await generateManifest({directoryPath});
     const databaseNames = await getDatabaseNames(options);
     for (let databaseName of databaseNames)
     {
