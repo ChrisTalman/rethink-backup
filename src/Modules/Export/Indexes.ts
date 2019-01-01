@@ -11,10 +11,11 @@ import { generateFilePath } from './';
 
 // Types
 import { IndexStatus } from 'rethinkdb-ts';
+import { Table } from './';
 
-export default async function({databaseName, tableName, directoryPath}: {databaseName: string, tableName: string, directoryPath: string})
+export default async function({databaseName, table, directoryPath}: {databaseName: string, table: Table, directoryPath: string})
 {
-    const indexes = await getIndexes({databaseName, tableName});
+    const indexes = await getIndexes({databaseName, table});
     const exported = indexes.map
     (
         index =>
@@ -28,15 +29,15 @@ export default async function({databaseName, tableName, directoryPath}: {databas
         )
     );
     const fileContents = JSON.stringify(exported);
-    const filePath = generateFilePath({databaseName, tableName, directoryPath, fileName: 'indexes'});
+    const filePath = generateFilePath({databaseName, table, directoryPath, fileName: 'indexes'});
     await writeFile(filePath, fileContents);
 };
 
-async function getIndexes({databaseName, tableName}: {databaseName: string, tableName: string})
+async function getIndexes({databaseName, table}: {databaseName: string, table: Table})
 {
     const query = RethinkDB
         .db(databaseName)
-        .table(tableName)
+        .table(table.name)
         .indexStatus();
     const indexes: Array<IndexStatus> = await RethinkUtilities.run({query});
     return indexes;

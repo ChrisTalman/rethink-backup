@@ -9,19 +9,22 @@ import RethinkUtilities from 'src/Modules/Utilities/RethinkDB';
 // Internal Modules
 import { generateFilePath } from './';
 
-export default async function({databaseName, tableName, directoryPath}: {databaseName: string, tableName: string, directoryPath: string})
+// Types
+import { Table } from './';
+
+export default async function({databaseName, table, directoryPath}: {databaseName: string, table: Table, directoryPath: string})
 {
-    const documents = await getIndexes({databaseName, tableName});
+    const documents = await getIndexes({databaseName, table});
     const fileContents = JSON.stringify(documents);
-    const filePath = generateFilePath({databaseName, tableName, directoryPath, fileName: 'documents'});
+    const filePath = generateFilePath({databaseName, table, directoryPath, fileName: 'documents'});
     await writeFile(filePath, fileContents);
 };
 
-async function getIndexes({databaseName, tableName}: {databaseName: string, tableName: string})
+async function getIndexes({databaseName, table}: {databaseName: string, table: Table})
 {
     const query = RethinkDB
         .db(databaseName)
-        .table(tableName);
+        .table(table.name);
     const documents: Array<any> = await RethinkUtilities.run({query});
     return documents;
 };

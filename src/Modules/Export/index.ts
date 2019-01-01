@@ -11,6 +11,7 @@ import { r as RethinkDB } from 'rethinkdb-ts';
 import RethinkUtilities from 'src/Modules/Utilities/RethinkDB';
 
 // Internal Modules
+import generateManifest from './Manifest';
 import exportIndexes from './Indexes';
 import exportDocuments from './Documents';
 
@@ -22,6 +23,12 @@ export interface DatabaseFiltersObject
     [databaseName: string]: TablesFilters;
 };
 export interface TablesFilters extends Array<string> {};
+export interface Tables extends Array<Table> {};
+export interface Table
+{
+    id: string;
+    name: string;
+};
 
 export default async function(options: Options = {})
 {
@@ -32,20 +39,25 @@ export default async function(options: Options = {})
 
 async function exportDatabases(options: Options)
 {
-    const id = ulid();
-    const exportName = 'rethinkdb_export_' + id;
+    const exportId = ulid();
+    const exportName = 'rethinkdb_export_' + exportId;
     const directoryPath = await createDirectory({name: exportName});
     const databaseNames = await getDatabaseNames(options);
     for (let databaseName of databaseNames)
     {
-        const tableNames = await getTableNames(databaseName);
-        for (let tableName of tableNames)
+        const tables = await getTables(databaseName);
+        for (let table of tables)
         {
-            await exportIndexes({databaseName, tableName, directoryPath});
-            await exportDocuments({databaseName, tableName, directoryPath});
+            await exportTable({databaseName, table, directoryPath});
         };
     };
     await compressDirectory({directoryPath, name: exportName});
+};
+
+async function exportTable({databaseName, table, directoryPath}: {databaseName: string, table: Table, directoryPath: string})
+{
+    await exportIndexes({databaseName, table, directoryPath});
+    await exportDocuments({databaseName, table, directoryPath});
 };
 
 async function getDatabaseNames(options: Options)
@@ -73,13 +85,15 @@ async function getDatabaseNames(options: Options)
     return names;
 };
 
-async function getTableNames(databaseName: string)
+async function getTables(databaseName: string)
 {
     const query = RethinkDB
-        .db(databaseName)
-        .tableList();
-    const names: Array<string> = await RethinkUtilities.run({query});
-    return names;
+        .db('rethinkdb')
+        .table('table_config')
+        .filter({db: databaseName})
+        .pluck('id', 'name');
+    const tables: Tables = await RethinkUtilities.run({query});
+    return tables;
 };
 
 /** Creates a directory for the export, and returns its path. */
@@ -101,8 +115,8 @@ async function compressDirectory({directoryPath, name}: {directoryPath: string, 
 };
 
 /** Generates a file path for table files. */
-export function generateFilePath({databaseName, tableName, directoryPath, fileName}: {databaseName: string, tableName: string, directoryPath: string, fileName: string})
+export function generateFilePath({databaseName, table, directoryPath, fileName}: {databaseName: string, table: Table, directoryPath: string, fileName: string})
 {
-    const filePath = directoryPath + '/' + databaseName + '_' + tableName + '_' + fileName + '.json';
+    const filePath = directoryPath + '/' + databaseName + '_' + table.name + '_' + table.id + '_' + fileName + '.json';
     return filePath;
 };
