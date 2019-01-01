@@ -4,7 +4,7 @@
 
 // External Modules
 import { promises as FileSystemPromises } from 'fs';
-const { mkdir: makeDirectory } = FileSystemPromises;
+const { mkdir: makeDirectory, rmdir: deleteDirectory, readdir: getDirectoryFileNames, unlink: deleteFile } = FileSystemPromises;
 import { create as createTar } from 'tar';
 import { ulid } from 'ulid';
 import { r as RethinkDB } from 'rethinkdb-ts';
@@ -95,6 +95,9 @@ async function compressDirectory({directoryPath, name}: {directoryPath: string, 
 {
     const fileName = name + '.tar.gz';
     await createTar({file: fileName, cwd: directoryPath, gzip: true}, ['./']);
+    const directoryFileNames = await getDirectoryFileNames(directoryPath);
+    await Promise.all(directoryFileNames.map(fileName => deleteFile(directoryPath + '/' + fileName)));
+    await deleteDirectory(directoryPath);
 };
 
 /** Generates a file path for table files. */
