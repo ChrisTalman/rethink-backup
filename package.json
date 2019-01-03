@@ -17,6 +17,7 @@
  "devDependencies": {
   "@bluecewe/config": "bitbucket:bluecewe/config",
   "@bluecewe/rethink-utilities": "bitbucket:bluecewe/rethink-utilities",
+  "@types/lzma-native": "4.0.0",
   "@types/node": "10.12.18",
   "@types/tar": "4.0.0",
   "extra-watch-webpack-plugin": "1.0.3",
@@ -27,6 +28,7 @@
   "webpack-node-externals": "1.7.2"
  },
  "dependencies": {
+  "lzma-native": "4.0.3",
   "rethinkdb-ts": "2.4.0-rc.11",
   "tar": "4.4.8",
   "ulid": "2.3.0"
