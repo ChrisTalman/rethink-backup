@@ -3,9 +3,10 @@
 // To Do: Guarantee file name uniqueness.
 
 // External Modules
-import { promises as FileSystemPromises } from 'fs';
+import { promises as FileSystemPromises, createReadStream, createWriteStream, WriteStream } from 'fs';
 const { mkdir: makeDirectory, rmdir: deleteDirectory, readdir: getDirectoryFileNames, unlink: deleteFile } = FileSystemPromises;
 import { create as createTar } from 'tar';
+import { createCompressor as createXzCompressor } from 'lzma-native';
 import { ulid } from 'ulid';
 import { r as RethinkDB } from 'rethinkdb-ts';
 import RethinkUtilities from 'src/Modules/Utilities/RethinkDB';
@@ -108,8 +109,33 @@ async function createDirectory({name}: {name: string})
 /** Compresses the given directory, deleting the directory once compressed. */
 async function compressDirectory({directoryPath, name}: {directoryPath: string, name: string})
 {
-    const fileName = name + '.tar.gz';
-    await createTar({file: fileName, cwd: directoryPath, gzip: true}, ['./']);
+    const tarFileName = name + '.tar';
+    await createTar({file: tarFileName, cwd: directoryPath}, ['./']);
+    const xzFileName = tarFileName + '.xz';
+    const compressor = createXzCompressor();
+    const readStream = createReadStream(tarFileName);
+    const writeStream = createWriteStream(xzFileName);
+    const writePromise = generateWriteStreamPromise(writeStream);
+    readStream.pipe(compressor).pipe(writeStream);
+    await writePromise;
+    await Promise.all
+    (
+        [
+            deleteFile(tarFileName),
+            deleteDirectoryWithContents(directoryPath)
+        ]
+    );
+};
+
+function generateWriteStreamPromise(stream: WriteStream)
+{
+    const promise: Promise<void> = new Promise(resolve => stream.once('finish', resolve));
+    return promise;
+};
+
+/** Deletes all files from directory, and then deletes the directory. */
+async function deleteDirectoryWithContents(directoryPath: string)
+{
     const directoryFileNames = await getDirectoryFileNames(directoryPath);
     await Promise.all(directoryFileNames.map(fileName => deleteFile(directoryPath + '/' + fileName)));
     await deleteDirectory(directoryPath);
