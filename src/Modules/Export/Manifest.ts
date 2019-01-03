@@ -8,8 +8,9 @@ import RethinkUtilities from 'src/Modules/Utilities/RethinkDB';
 
 // Types
 import { Manifest, Databases } from 'src/Types/Manifest';
+import { Options } from './';
 
-export default async function generate({directoryPath}: {directoryPath: string})
+export default async function generate({directoryPath, options}: {directoryPath: string, options: Options})
 {
     const databases = await getDatabases();
     const manifest: Manifest =
