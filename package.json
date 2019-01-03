@@ -19,6 +19,7 @@
   "@bluecewe/rethink-utilities": "bitbucket:bluecewe/rethink-utilities",
   "@types/node": "10.12.18",
   "@types/tar": "4.0.0",
+  "extra-watch-webpack-plugin": "1.0.3",
   "ts-loader": "5.3.2",
   "typescript": "3.2.2",
   "webpack": "4.28.3",
