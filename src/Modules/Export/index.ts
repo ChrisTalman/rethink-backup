@@ -3,7 +3,7 @@
 // To Do: Guarantee file name uniqueness.
 
 // External Modules
-import { promises as FileSystemPromises, createReadStream, createWriteStream, WriteStream } from 'fs';
+import { promises as FileSystemPromises, createReadStream, createWriteStream } from 'fs';
 const { mkdir: makeDirectory, rmdir: deleteDirectory, readdir: getDirectoryFileNames, unlink: deleteFile } = FileSystemPromises;
 import { create as createTar } from 'tar';
 import { createCompressor as createXzCompressor } from 'lzma-native';
@@ -15,6 +15,7 @@ import RethinkUtilities from 'src/Modules/Utilities/RethinkDB';
 import generateManifest from './Manifest';
 import exportIndexes from './Indexes';
 import exportDocuments from './Documents';
+import generateWriteStreamPromise from 'src/Modules/Utilities/GenerateWriteStreamPromise';
 
 // Types
 export type Options = {} | { pluck?: DatabaseFilters } | { without?: DatabaseFilters };
@@ -43,7 +44,7 @@ async function exportDatabases(options: Options)
     const exportId = ulid();
     const exportName = 'rethinkdb_export_' + exportId;
     const directoryPath = await createDirectory({name: exportName});
-    await generateManifest({directoryPath});
+    await generateManifest({directoryPath, options});
     const databaseNames = await getDatabaseNames(options);
     for (let databaseName of databaseNames)
     {
@@ -125,12 +126,6 @@ async function compressDirectory({directoryPath, name}: {directoryPath: string, 
             deleteDirectoryWithContents(directoryPath)
         ]
     );
-};
-
-function generateWriteStreamPromise(stream: WriteStream)
-{
-    const promise: Promise<void> = new Promise(resolve => stream.once('finish', resolve));
-    return promise;
 };
 
 /** Deletes all files from directory, and then deletes the directory. */
