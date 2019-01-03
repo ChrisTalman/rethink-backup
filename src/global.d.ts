@@ -1,0 +1,1 @@
+declare const MODULE_VERSION: string;

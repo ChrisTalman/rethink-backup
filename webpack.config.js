@@ -1,8 +1,10 @@
 'use strict';
 
 // External Modules
+const Webpack = require('webpack');
 const Path = require('path');
 const NodeExternals = require('webpack-node-externals');
+const ExtraWatchWebpackPlugin = require('extra-watch-webpack-plugin');
 
 // Constants
 const TYPESCRIPT_IGNORE = /(?:node_modules)$/;
@@ -42,6 +44,31 @@ module.exports =
             }
         ]
     },
+    plugins:
+    [
+        new ExtraWatchWebpackPlugin
+        (
+            {
+                files: ['./package.json']
+            }
+        ),
+        new Webpack.DefinePlugin
+        (
+            {
+                MODULE_VERSION: Webpack.DefinePlugin.runtimeValue
+                (
+                    () =>
+                    {
+                        const packageJsonPath = Path.resolve(process.cwd(), 'package.json');
+                        delete require.cache[packageJsonPath];
+                        const version = require('./package.json').version;
+                        return JSON.stringify(version);
+                    },
+                    true
+                )
+            }
+        )
+    ],
 	externals:
 	[
 		NodeExternals({whitelist: NODE_EXTERNALS_WHITELIST})
