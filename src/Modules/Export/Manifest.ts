@@ -7,6 +7,11 @@ import { r as RethinkDB } from 'rethinkdb-ts';
 import RethinkUtilities from 'src/Modules/Utilities/RethinkDB';
 
 // Types
+export interface Manifest
+{
+    moduleVersion: string;
+    databases: Databases;
+};
 export interface Databases extends Array<Database> {};
 export interface Database
 {
@@ -24,10 +29,16 @@ export interface Table
 export default async function generate({directoryPath}: {directoryPath: string})
 {
     const databases = await getDatabases();
-    const json = JSON.stringify(databases);
+    const manifest: Manifest =
+    {
+        moduleVersion: MODULE_VERSION,
+        databases
+    };
+    const json = JSON.stringify(manifest);
     const fileName = 'manifest.json';
     const filePath = directoryPath + '/' + fileName;
     await writeFile(filePath, json);
+    return manifest;
 };
 
 async function getDatabases()
