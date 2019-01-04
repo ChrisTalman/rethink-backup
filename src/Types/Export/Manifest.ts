@@ -19,4 +19,8 @@ export interface Table
 {
     id: string;
     name: string;
+    primary_key: string;
+    durability: 'soft' | 'hard';
+    replicas: number;
+    shards: number;
 };
