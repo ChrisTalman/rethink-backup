@@ -45,7 +45,17 @@ async function getDatabases(options: Options)
                         .db('rethinkdb')
                         .table('table_config')
                         .filter({db: database('name')})
-                        .pluck('id', 'name')
+                        .pluck('id', 'name', 'primary_key', 'durability', 'shards')
+                        .merge
+                        (
+                            (table: RDatum) =>
+                            (
+                                {
+                                    shards: table('shards').count(),
+                                    replicas: table('shards').nth(0)('replicas').count()
+                                }
+                            )
+                        )
                         .coerceTo('array')
                 }
             )
