@@ -7,9 +7,9 @@ import { extract as extractTar } from 'tar';
 import { createDecompressor as createXzDecompressor } from 'lzma-native';
 import * as Joi from 'joi';
 import { r as RethinkDB } from 'rethinkdb-ts';
-import RethinkUtilities from 'src/Modules/Utilities/RethinkDB';
 
 // Internal Modules
+import importDatabase from './Database';
 import generateWriteStreamPromise from 'src/Modules/Utilities/GenerateWriteStreamPromise';
 
 // Types
@@ -18,8 +18,12 @@ export interface Options
 {
     /** File name of backup to import. */
     file: string;
-    /** Delete documents and indexes from exisitng tables for which backup data is available. */
+    /** Delete documents and indexes from exisitng tables for which backup data is available. Default: false. */
     clear?: boolean;
+    /** Shard tables according to backup data. Default: false. */
+    shard?: boolean;
+    /** Replicate tables according to backup data. Default: false. */
+    replicate?: boolean;
 };
 
 // Constants
@@ -31,7 +35,9 @@ const OPTIONS_SCHEMA = Joi.object
     (
         {
             file: Joi.string().required(),
-            clear: Joi.boolean().default(OPTIONS_DEFAULT.clear)
+            clear: Joi.boolean().default(OPTIONS_DEFAULT.clear),
+            shard: Joi.boolean().default(false),
+            replicate: Joi.boolean().default(false)
         }
     )
     .default(OPTIONS_DEFAULT);
@@ -47,6 +53,7 @@ export default async function(options: Options = {} as Options)
 async function importDatabases(options: Options)
 {
     const manifest = await decompress(options);
+    await Promise.all(manifest.databases.map(database => importDatabase({database, options})));
 };
 
 async function decompress(options: Options)
@@ -58,7 +65,7 @@ async function decompress(options: Options)
     const writePromise = generateWriteStreamPromise(writeStream);
     readStream.pipe(compressor).pipe(writeStream);
     await writePromise;
-    const exportDirectory = './' + options.file.replace(/\.tar\.xz$/, '');
+    const exportDirectory = generateRelativeExportDirectoryPath(options);
     try
     {
         await makeDirectory(exportDirectory);
@@ -74,6 +81,12 @@ async function decompress(options: Options)
     const manifestSource = await readFile(manifestFileName, 'utf8');
     const manifest: Manifest = JSON.parse(manifestSource);
     return manifest;
+};
+
+export function generateRelativeExportDirectoryPath(options: Options)
+{
+    const path = './' + options.file.replace(/\.tar\.xz$/, '');
+    return path;
 };
 
 function validateOptions(options: Options)
