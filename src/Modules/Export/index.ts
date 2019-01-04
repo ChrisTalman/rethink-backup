@@ -18,7 +18,7 @@ import exportDocuments from './Documents';
 import generateWriteStreamPromise from 'src/Modules/Utilities/GenerateWriteStreamPromise';
 
 // Types
-import { Database } from 'src/Types/Manifest';
+import { Database } from 'src/Types/Export/Manifest';
 export type Options = {} | { pluck?: DatabaseFilters } | { without?: DatabaseFilters };
 export interface DatabaseFilters extends Array<string | DatabaseFiltersObject> {};
 export interface DatabaseFiltersObject

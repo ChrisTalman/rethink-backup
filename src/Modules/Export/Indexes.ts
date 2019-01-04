@@ -11,7 +11,7 @@ import { generateFilePath } from './';
 
 // Types
 import { IndexStatus } from 'rethinkdb-ts';
-import { Database } from 'src/Types/Manifest';
+import { Database } from 'src/Types/Export/Manifest';
 import { Table } from './';
 
 export default async function({database, table, directoryPath}: {database: Database, table: Table, directoryPath: string})

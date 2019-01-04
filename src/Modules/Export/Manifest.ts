@@ -10,7 +10,7 @@ import RethinkUtilities from 'src/Modules/Utilities/RethinkDB';
 
 // Types
 import { RDatum } from 'rethinkdb-ts';
-import { Manifest, Databases } from 'src/Types/Manifest';
+import { Manifest, Databases } from 'src/Types/Export/Manifest';
 import { Options, DatabaseFilters } from './';
 interface DatabaseFiltersExpression extends RDatum<DatabaseFilters> {};
 
