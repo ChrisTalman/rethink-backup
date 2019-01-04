@@ -1,6 +1,7 @@
 'use strict';
 
 // To Do: Guarantee file name uniqueness.
+// To Do: It might be useful to throw an exception in the event that a plucked database or table is not available.
 
 // External Modules
 import { promises as FileSystemPromises, createReadStream, createWriteStream } from 'fs';
@@ -9,7 +10,6 @@ import { create as createTar } from 'tar';
 import { createCompressor as createXzCompressor } from 'lzma-native';
 import { ulid } from 'ulid';
 import { r as RethinkDB } from 'rethinkdb-ts';
-import RethinkUtilities from 'src/Modules/Utilities/RethinkDB';
 
 // Internal Modules
 import generateManifest from './Manifest';
@@ -18,6 +18,7 @@ import exportDocuments from './Documents';
 import generateWriteStreamPromise from 'src/Modules/Utilities/GenerateWriteStreamPromise';
 
 // Types
+import { Database } from 'src/Types/Manifest';
 export type Options = {} | { pluck?: DatabaseFilters } | { without?: DatabaseFilters };
 export interface DatabaseFilters extends Array<string | DatabaseFiltersObject> {};
 export interface DatabaseFiltersObject
@@ -44,59 +45,21 @@ async function exportDatabases(options: Options)
     const exportId = ulid();
     const exportName = 'rethinkdb_export_' + exportId;
     const directoryPath = await createDirectory({name: exportName});
-    await generateManifest({directoryPath, options});
-    const databaseNames = await getDatabaseNames(options);
-    for (let databaseName of databaseNames)
+    const manifest = await generateManifest({directoryPath, options});
+    for (let database of manifest.databases)
     {
-        const tables = await getTables(databaseName);
-        for (let table of tables)
+        for (let table of database.tables)
         {
-            await exportTable({databaseName, table, directoryPath});
+            await exportTable({database, table, directoryPath});
         };
     };
     await compressDirectory({directoryPath, name: exportName});
 };
 
-async function exportTable({databaseName, table, directoryPath}: {databaseName: string, table: Table, directoryPath: string})
+async function exportTable({database, table, directoryPath}: {database: Database, table: Table, directoryPath: string})
 {
-    await exportIndexes({databaseName, table, directoryPath});
-    await exportDocuments({databaseName, table, directoryPath});
-};
-
-async function getDatabaseNames(options: Options)
-{
-    let query = RethinkDB
-        .dbList()
-        .filter(name => name.ne('rethinkdb'));
-    if ('pluck' in options || 'without' in options)
-    {
-        const filters = ('pluck' in options && options.pluck) || ('without' in options && options.without);
-        const evaluatedFilters = filters.reduce
-        (
-            (names, databaseVariant) =>
-            {
-                if (typeof databaseVariant === 'string') names.push(databaseVariant);
-                else names.push(... Object.keys(databaseVariant));
-                return names;
-            },
-            [] as Array<string>
-        );
-        if ('pluck' in options) query = query.filter(name => RethinkDB.expr(evaluatedFilters).contains(name).eq(true));
-        else query = query.filter(name => RethinkDB.expr(evaluatedFilters).contains(name).eq(false));
-    };
-    const names: Array<string> = await RethinkUtilities.run({query});
-    return names;
-};
-
-async function getTables(databaseName: string)
-{
-    const query = RethinkDB
-        .db('rethinkdb')
-        .table('table_config')
-        .filter({db: databaseName})
-        .pluck('id', 'name');
-    const tables: Tables = await RethinkUtilities.run({query});
-    return tables;
+    await exportIndexes({database, table, directoryPath});
+    await exportDocuments({database, table, directoryPath});
 };
 
 /** Creates a directory for the export, and returns its path. */
@@ -137,8 +100,8 @@ async function deleteDirectoryWithContents(directoryPath: string)
 };
 
 /** Generates a file path for table files. */
-export function generateFilePath({databaseName, table, directoryPath, fileName}: {databaseName: string, table: Table, directoryPath: string, fileName: string})
+export function generateFilePath({database, table, directoryPath, fileName}: {database: Database, table: Table, directoryPath: string, fileName: string})
 {
-    const filePath = directoryPath + '/' + databaseName + '_' + table.name + '_' + table.id + '_' + fileName + '.json';
+    const filePath = directoryPath + '/' + database.name + '_' + table.name + '_' + table.id + '_' + fileName + '.json';
     return filePath;
 };
