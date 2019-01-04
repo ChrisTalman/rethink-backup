@@ -12,12 +12,13 @@ import { generateFilePath } from './';
 // Types
 import { IndexStatus } from 'rethinkdb-ts';
 import { Database } from 'src/Types/Export/Manifest';
+import { Indexes } from 'src/Types/Export/Indexes';
 import { Table } from './';
 
 export default async function({database, table, directoryPath}: {database: Database, table: Table, directoryPath: string})
 {
     const indexes = await getIndexes({database, table});
-    const exported = indexes.map
+    const exported: Indexes = indexes.map
     (
         index =>
         (
