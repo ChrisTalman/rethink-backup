@@ -13,7 +13,7 @@ import importDatabase from './Database';
 import generateWriteStreamPromise from 'src/Modules/Utilities/GenerateWriteStreamPromise';
 
 // Types
-import { Manifest } from 'src/Types/Manifest';
+import { Manifest } from 'src/Types/Export/Manifest';
 export interface Options
 {
     /** File name of backup to import. */
