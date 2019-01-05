@@ -1,6 +1,5 @@
 'use strict';
 
-// To Do: Guarantee file name uniqueness.
 // To Do: It might be useful to throw an exception in the event that a plucked database or table is not available.
 
 // External Modules
