@@ -18,7 +18,7 @@ import generateWriteStreamPromise from 'src/Modules/Utilities/GenerateWriteStrea
 import { Manifest } from 'src/Types/Export/Manifest';
 export interface Options
 {
-    /** File name of backup to import. */
+    /** File name of backup to import. Must be .tar.xz file. */
     file: string;
     /** Delete documents and indexes from exisitng tables for which backup data is available. Default: false. */
     clear?: boolean;
