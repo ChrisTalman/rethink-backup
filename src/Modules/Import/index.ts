@@ -1,5 +1,7 @@
 'use strict';
 
+// To Do: Allow import of .tar and folders. Currently, you can only import a .tar.xz.
+
 // External Modules
 import { promises as FileSystemPromises, createReadStream, createWriteStream } from 'fs';
 const { mkdir: makeDirectory, unlink: deleteFile, readFile } = FileSystemPromises;
