@@ -1,5 +1,5 @@
 'use strict';
 
 // Methods
-export { default as export } from 'src/Modules/Export';
-export { default as import } from 'src/Modules/Import';
+export { default as dump } from 'src/Modules/Export';
+export { default as restore } from 'src/Modules/Import';
