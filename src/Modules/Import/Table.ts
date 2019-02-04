@@ -4,34 +4,33 @@
 import { promises as FileSystemPromises } from 'fs';
 const { readFile } = FileSystemPromises;
 import { r as RethinkDB } from 'rethinkdb-ts';
-import RethinkUtilities from 'src/Modules/Utilities/RethinkDB';
 
 // Internal Modules
 import { generateFilePath } from 'src/Modules/Export';
+import Importment from './Importment';
 import { generateRelativeExportDirectoryPath } from './';
 
 // Types
 import { TableCreateOptions } from 'rethinkdb-ts';
 import { Database, Table } from 'src/Types/Export/Manifest';
 import { Index, Indexes } from 'src/Types/Export/Indexes';
-import { Options } from './';
 
-export default async function({database, table, options}: {database: Database, table: Table, options: Options})
+export default async function({database, table, importment}: {database: Database, table: Table, importment: Importment})
 {
-    await guaranteeTable({database, table, options});
-    await clearTable({database, table, options});
-    await populateTable({database, table, options});
+    await guaranteeTable({database, table, importment});
+    await clearTable({database, table, importment});
+    await populateTable({database, table, importment});
 };
 
-async function guaranteeTable({database, table, options}: {database: Database, table: Table, options: Options})
+async function guaranteeTable({database, table, importment}: {database: Database, table: Table, importment: Importment})
 {
     const tableOptions: TableCreateOptions =
     {
         primaryKey: table.primary_key,
         durability: table.durability
     };
-    if (options.shard) tableOptions.shards = table.shards;
-    if (options.replicate) tableOptions.replicas = table.replicas;
+    if (importment.options.shard) tableOptions.shards = table.shards;
+    if (importment.options.replicate) tableOptions.replicas = table.replicas;
     const query = RethinkDB
         .branch
         (
@@ -39,91 +38,97 @@ async function guaranteeTable({database, table, options}: {database: Database, t
             RethinkDB.db(database.name).tableCreate(table.name, tableOptions),
             true
         );
-    await RethinkUtilities.run({query});
+    await query.run(importment.connection);
 };
 
-async function clearTable({database, table, options}: {database: Database, table: Table, options: Options})
+async function clearTable({database, table, importment}: {database: Database, table: Table, importment: Importment})
 {
-    if (!options.clear) return;
+    if (!importment.options.clear) return;
     await Promise.all
     (
         [
-            clearDocuments({database, table}),
-            clearIndexes({database, table})
+            clearDocuments({database, table, importment}),
+            clearIndexes({database, table, importment})
         ]
     );
 };
 
-async function clearDocuments({database, table}: {database: Database, table: Table})
+async function clearDocuments({database, table, importment}: {database: Database, table: Table, importment: Importment})
 {
     const query = RethinkDB
         .db(database.name)
         .table(table.name)
         .delete();
-    await RethinkUtilities.run({query});
+    await query.run(importment.connection);
 };
 
-async function clearIndexes({database, table}: {database: Database, table: Table})
+async function clearIndexes({database, table, importment}: {database: Database, table: Table, importment: Importment})
 {
-    const indexNames = await getIndexNames({database, table});
-    await Promise.all(indexNames.map(indexName => deleteIndex({database, table, indexName})));
+    const indexNames = await getIndexNames({database, table, importment});
+    await Promise.all
+    (
+        indexNames.map
+        (
+            indexName => deleteIndex({database, table, indexName, importment})
+        )
+    );
 };
 
-async function deleteIndex({database, table, indexName}: {database: Database, table: Table, indexName: string})
+async function deleteIndex({database, table, indexName, importment}: {database: Database, table: Table, indexName: string, importment: Importment})
 {
     const query = RethinkDB
         .db(database.name)
         .table(table.name)
         .indexDrop(indexName);
-    await query.run();
+    await query.run(importment.connection);
 };
 
-async function getIndexNames({database, table}: {database: Database, table: Table})
+async function getIndexNames({database, table, importment}: {database: Database, table: Table, importment: Importment})
 {
     const query = RethinkDB
         .db(database.name)
         .table(table.name)
         .indexList();
-    const names = await query.run();
+    const names = await query.run(importment.connection);
     return names;
 };
 
-async function populateTable({database, table, options}: {database: Database, table: Table, options: Options})
+async function populateTable({database, table, importment}: {database: Database, table: Table, importment: Importment})
 {
-    await populateIndexes({database, table, options});
-    await populateDocuments({database, table, options});
+    await populateIndexes({database, table, importment});
+    await populateDocuments({database, table, importment});
 };
 
-async function populateIndexes({database, table, options}: {database: Database, table: Table, options: Options})
+async function populateIndexes({database, table, importment}: {database: Database, table: Table, importment: Importment})
 {
-    const filePath = generateFilePath({database, table, directoryPath: generateRelativeExportDirectoryPath(options), fileName: 'indexes'});
+    const filePath = generateFilePath({database, table, directoryPath: generateRelativeExportDirectoryPath({importment}), fileName: 'indexes'});
     const source = await readFile(filePath, 'utf8');
     const indexes: Indexes = JSON.parse(source);
-    await Promise.all(indexes.map(index => insertIndex({database, table, index})));
+    await Promise.all(indexes.map(index => insertIndex({database, table, index, importment})));
 };
 
-async function insertIndex({database, table, index}: {database: Database, table: Table, index: Index})
+async function insertIndex({database, table, index, importment}: {database: Database, table: Table, index: Index, importment: Importment})
 {
     const query = RethinkDB
         .db(database.name)
         .table(table.name)
         .indexCreate(index.index, Buffer.from(index.function), {multi: index.multi, geo: index.geo});
-    await query.run();
+    await query.run(importment.connection);
 };
 
-async function populateDocuments({database, table, options}: {database: Database, table: Table, options: Options})
+async function populateDocuments({database, table, importment}: {database: Database, table: Table, importment: Importment})
 {
-    const filePath = generateFilePath({database, table, directoryPath: generateRelativeExportDirectoryPath(options), fileName: 'documents'});
+    const filePath = generateFilePath({database, table, directoryPath: generateRelativeExportDirectoryPath({importment}), fileName: 'documents'});
     const source = await readFile(filePath, 'utf8');
     const documents: Array<object> = JSON.parse(source);
-    await insertDocuments({database, table, documents});
+    await insertDocuments({database, table, documents, importment});
 };
 
-async function insertDocuments({database, table, documents}: {database: Database, table: Table, documents: Array<object>})
+async function insertDocuments({database, table, documents, importment}: {database: Database, table: Table, documents: Array<object>, importment: Importment})
 {
     const query = RethinkDB
         .db(database.name)
         .table(table.name)
         .insert(documents);
-    await query.run();
+    await query.run(importment.connection);
 };

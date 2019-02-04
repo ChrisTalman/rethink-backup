@@ -4,10 +4,10 @@
 import { promises as FileSystemPromises } from 'fs';
 const { writeFile } = FileSystemPromises;
 import { r as RethinkDB } from 'rethinkdb-ts';
-import RethinkUtilities from 'src/Modules/Utilities/RethinkDB';
 
 // Internal Modules
 import { generateFilePath } from './';
+import Exportment from './Exportment';
 
 // Types
 import { IndexStatus } from 'rethinkdb-ts';
@@ -15,9 +15,9 @@ import { Database } from 'src/Types/Export/Manifest';
 import { Indexes } from 'src/Types/Export/Indexes';
 import { Table } from './';
 
-export default async function({database, table, directoryPath}: {database: Database, table: Table, directoryPath: string})
+export default async function({database, table, directoryPath, exportment}: {database: Database, table: Table, directoryPath: string, exportment: Exportment})
 {
-    const indexes = await getIndexes({database, table});
+    const indexes = await getIndexes({database, table, exportment});
     const exported: Indexes = indexes.map
     (
         index =>
@@ -35,12 +35,12 @@ export default async function({database, table, directoryPath}: {database: Datab
     await writeFile(filePath, fileContents);
 };
 
-async function getIndexes({database, table}: {database: Database, table: Table})
+async function getIndexes({database, table, exportment}: {database: Database, table: Table, exportment: Exportment})
 {
     const query = RethinkDB
         .db(database.name)
         .table(table.name)
         .indexStatus();
-    const indexes: Array<IndexStatus> = await RethinkUtilities.run({query});
+    const indexes: Array<IndexStatus> = await query.run(exportment.connection);
     return indexes;
 };

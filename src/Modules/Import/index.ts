@@ -7,67 +7,56 @@ import { promises as FileSystemPromises, createReadStream, createWriteStream } f
 const { mkdir: makeDirectory, unlink: deleteFile, readFile } = FileSystemPromises;
 import { extract as extractTar } from 'tar';
 import { createDecompressor as createXzDecompressor } from 'lzma-native';
-import * as Joi from 'joi';
-import { r as RethinkDB } from 'rethinkdb-ts';
 
 // Internal Modules
-import importDatabase from './Database';
 import generateWriteStreamPromise from 'src/Modules/Utilities/GenerateWriteStreamPromise';
+import Importment from './Importment';
+import importDatabase from './Database';
 
 // Types
 import { Manifest } from 'src/Types/Export/Manifest';
-export interface Options
+import { Options } from './Importment';
+
+export default async function(options: Options)
 {
-    /** File name of backup to import. Must be .tar.xz file. */
-    file: string;
-    /** Delete documents and indexes from exisitng tables for which backup data is available. Default: false. */
-    clear?: boolean;
-    /** Shard tables according to backup data. Default: false. */
-    shard?: boolean;
-    /** Replicate tables according to backup data. Default: false. */
-    replicate?: boolean;
+    const importment = new Importment({options});
+	await importment.initialise();
+    try
+    {
+        await importDatabases({importment});
+    }
+    catch (error)
+    {
+        throw error;
+    }
+    finally
+    {
+        await importment.finish();
+    };
 };
 
-// Constants
-const OPTIONS_DEFAULT =
+async function importDatabases({importment}: {importment: Importment})
 {
-    clear: false
-};
-const OPTIONS_SCHEMA = Joi.object
+    const manifest = await decompress({importment});
+    await Promise.all
     (
-        {
-            file: Joi.string().required(),
-            clear: Joi.boolean().default(OPTIONS_DEFAULT.clear),
-            shard: Joi.boolean().default(false),
-            replicate: Joi.boolean().default(false)
-        }
-    )
-    .default(OPTIONS_DEFAULT);
-
-export default async function(options: Options = {} as Options)
-{
-    options = validateOptions(options);
-    const pool = await RethinkDB.connectPool();
-    await importDatabases(options);
-    await pool.drain();
+        manifest.databases.map
+        (
+            database => importDatabase({database, importment})
+        )
+    );
 };
 
-async function importDatabases(options: Options)
-{
-    const manifest = await decompress(options);
-    await Promise.all(manifest.databases.map(database => importDatabase({database, options})));
-};
-
-async function decompress(options: Options)
+async function decompress({importment}: {importment: Importment})
 {
     const compressor = createXzDecompressor();
-    const readStream = createReadStream(options.file);
-    const tarFileName = options.file.replace(/\.xz$/, '');
+    const readStream = createReadStream(importment.options.file);
+    const tarFileName = importment.options.file.replace(/\.xz$/, '');
     const writeStream = createWriteStream(tarFileName);
     const writePromise = generateWriteStreamPromise(writeStream);
     readStream.pipe(compressor).pipe(writeStream);
     await writePromise;
-    const exportDirectory = generateRelativeExportDirectoryPath(options);
+    const exportDirectory = generateRelativeExportDirectoryPath({importment});
     try
     {
         await makeDirectory(exportDirectory);
@@ -85,16 +74,8 @@ async function decompress(options: Options)
     return manifest;
 };
 
-export function generateRelativeExportDirectoryPath(options: Options)
+export function generateRelativeExportDirectoryPath({importment}: {importment: Importment})
 {
-    const path = './' + options.file.replace(/\.tar\.xz$/, '');
+    const path = './' + importment.options.file.replace(/\.tar\.xz$/, '');
     return path;
-};
-
-function validateOptions(options: Options)
-{
-    const validated = Joi.validate(options, OPTIONS_SCHEMA, {allowUnknown: false});
-    if (validated.error) throw new Error(validated.error.message);
-    options = validated.value;
-    return options;
 };

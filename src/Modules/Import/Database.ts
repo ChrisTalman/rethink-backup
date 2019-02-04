@@ -2,22 +2,21 @@
 
 // External Modules
 import { r as RethinkDB } from 'rethinkdb-ts';
-import RethinkUtilities from 'src/Modules/Utilities/RethinkDB';
 
 // Internal Modules
+import Importment from './Importment';
 import importTable from './Table';
 
 // Types
 import { Database } from 'src/Types/Export/Manifest';
-import { Options } from './';
 
-export default async function({database, options}: {database: Database, options: Options})
+export default async function({database, importment}: {database: Database, importment: Importment})
 {
-    await guaranteeDatabase(database);
-    await Promise.all(database.tables.map(table => importTable({database, table, options})));
+    await guaranteeDatabase({database, importment});
+    await Promise.all(database.tables.map(table => importTable({database, table, importment})));
 };
 
-async function guaranteeDatabase(database: Database)
+async function guaranteeDatabase({database, importment}: {database: Database, importment: Importment})
 {
     const query = RethinkDB
         .branch
@@ -26,5 +25,5 @@ async function guaranteeDatabase(database: Database)
             RethinkDB.dbCreate(database.name),
             true
         );
-    await RethinkUtilities.run({query});
+    await query.run(importment.connection);
 };

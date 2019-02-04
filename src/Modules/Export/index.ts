@@ -8,9 +8,9 @@ const { mkdir: makeDirectory, rmdir: deleteDirectory, readdir: getDirectoryFileN
 import { create as createTar } from 'tar';
 import { createCompressor as createXzCompressor } from 'lzma-native';
 import { ulid } from 'ulid';
-import { r as RethinkDB } from 'rethinkdb-ts';
 
 // Internal Modules
+import Exportment from './Exportment';
 import generateManifest from './Manifest';
 import exportIndexes from './Indexes';
 import exportDocuments from './Documents';
@@ -18,13 +18,7 @@ import generateWriteStreamPromise from 'src/Modules/Utilities/GenerateWriteStrea
 
 // Types
 import { Database } from 'src/Types/Export/Manifest';
-export type Options = {} | { pluck?: DatabaseFilters } | { without?: DatabaseFilters };
-export interface DatabaseFilters extends Array<string | DatabaseFiltersObject> {};
-export interface DatabaseFiltersObject
-{
-    [databaseName: string]: TablesFilters;
-};
-export interface TablesFilters extends Array<string> {};
+import { Options } from './Exportment';
 export interface Tables extends Array<Table> {};
 export interface Table
 {
@@ -32,33 +26,44 @@ export interface Table
     name: string;
 };
 
-export default async function(options: Options = {})
+export default async function({options}: {options: Options})
 {
-    const pool = await RethinkDB.connectPool();
-    await exportDatabases(options);
-    await pool.drain();
+	const exportment = new Exportment({options});
+	await exportment.initialise();
+	try
+	{
+    	await exportDatabases({exportment});
+	}
+	catch (error)
+	{
+		throw error;
+	}
+	finally
+	{
+		await exportment.finish();
+	};
 };
 
-async function exportDatabases(options: Options)
+async function exportDatabases({exportment}: {exportment: Exportment})
 {
     const exportId = ulid();
     const exportName = 'rethinkdb_export_' + exportId;
     const directoryPath = await createDirectory({name: exportName});
-    const manifest = await generateManifest({directoryPath, options});
+    const manifest = await generateManifest({directoryPath, exportment});
     for (let database of manifest.databases)
     {
         for (let table of database.tables)
         {
-            await exportTable({database, table, directoryPath});
+            await exportTable({database, table, directoryPath, exportment});
         };
     };
     await compressDirectory({directoryPath, name: exportName});
 };
 
-async function exportTable({database, table, directoryPath}: {database: Database, table: Table, directoryPath: string})
+async function exportTable({database, table, directoryPath, exportment}: {database: Database, table: Table, directoryPath: string, exportment: Exportment})
 {
-    await exportIndexes({database, table, directoryPath});
-    await exportDocuments({database, table, directoryPath});
+    await exportIndexes({database, table, directoryPath, exportment});
+    await exportDocuments({database, table, directoryPath, exportment});
 };
 
 /** Creates a directory for the export, and returns its path. */

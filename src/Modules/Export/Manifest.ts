@@ -6,17 +6,19 @@
 import { promises as FileSystemPromises } from 'fs';
 const { writeFile } = FileSystemPromises;
 import { r as RethinkDB } from 'rethinkdb-ts';
-import RethinkUtilities from 'src/Modules/Utilities/RethinkDB';
+
+// Internal Modules
+import Exportment from './Exportment';
 
 // Types
 import { RDatum } from 'rethinkdb-ts';
 import { Manifest, Databases } from 'src/Types/Export/Manifest';
-import { Options, DatabaseFilters } from './';
+import { Options, DatabaseFilters } from './Exportment';
 interface DatabaseFiltersExpression extends RDatum<DatabaseFilters> {};
 
-export default async function generate({directoryPath, options}: {directoryPath: string, options: Options})
+export default async function generate({directoryPath, exportment}: {directoryPath: string, exportment: Exportment})
 {
-    const databases = await getDatabases(options);
+    const databases = await getDatabases({exportment});
     const manifest: Manifest =
     {
         moduleVersion: MODULE_VERSION,
@@ -29,13 +31,13 @@ export default async function generate({directoryPath, options}: {directoryPath:
     return manifest;
 };
 
-async function getDatabases(options: Options)
+async function getDatabases({exportment}: {exportment: Exportment})
 {
-    const databaseFilters = getFilters(options);
+    const databaseFilters = getFilters(exportment.options);
     const query = RethinkDB
         .db('rethinkdb')
         .table('db_config')
-        .filter(database => filterDatabase(database, databaseFilters, options))
+        .filter(database => filterDatabase(database, databaseFilters, exportment.options))
         .merge
         (
             (database: RDatum) =>
@@ -60,7 +62,7 @@ async function getDatabases(options: Options)
                 }
             )
         );
-    const tables: Databases = await RethinkUtilities.run({query});
+    const tables: Databases = await query.run(exportment.connection);
     return tables;
 };
 
