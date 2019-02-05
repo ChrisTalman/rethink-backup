@@ -14,7 +14,7 @@ import Exportment from './Exportment';
 import { RDatum } from 'rethinkdb-ts';
 import { Manifest, Databases } from 'src/Types/Export/Manifest';
 import { Options, DatabaseFilters } from './Exportment';
-interface DatabaseFiltersExpression extends RDatum<DatabaseFilters> {};
+type DatabaseFiltersExpression = RDatum<DatabaseFilters> | RDatum<null>;
 
 export default async function generate({directoryPath, exportment}: {directoryPath: string, exportment: Exportment})
 {
@@ -79,7 +79,7 @@ function filterDatabase(database: RDatum, filters: DatabaseFiltersExpression, op
 
 function getFilters(options: Options)
 {
-    if (!('pluck' in options) && !('without' in options)) return null;
+    if (!('pluck' in options) && !('without' in options)) return RethinkDB.expr<null>(null);
     const filters = ('pluck' in options && options.pluck) || ('without' in options && options.without);
     const flattened = filters.reduce
     (
