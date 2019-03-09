@@ -8,7 +8,6 @@ const ExtraWatchWebpackPlugin = require('extra-watch-webpack-plugin');
 
 // Constants
 const TYPESCRIPT_IGNORE = /(?:node_modules)$/;
-const NODE_EXTERNALS_WHITELIST = [/^@bluecewe\/[\w-]+/];
 
 module.exports =
 {
@@ -71,6 +70,6 @@ module.exports =
     ],
 	externals:
 	[
-		NodeExternals({whitelist: NODE_EXTERNALS_WHITELIST})
+		NodeExternals()
 	]
 };
