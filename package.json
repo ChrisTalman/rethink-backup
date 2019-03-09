@@ -15,8 +15,6 @@
  },
  "main": "index.js",
  "devDependencies": {
-  "@bluecewe/config": "bitbucket:bluecewe/config",
-  "@bluecewe/rethink-utilities": "bitbucket:bluecewe/rethink-utilities",
   "@types/joi": "14.0.1",
   "@types/lzma-native": "4.0.0",
   "@types/node": "10.12.18",
@@ -29,6 +27,8 @@
   "webpack-node-externals": "1.7.2"
  },
  "dependencies": {
+  "@bluecewe/config": "bitbucket:bluecewe/config",
+  "@bluecewe/rethink-utilities": "bitbucket:bluecewe/rethink-utilities",
   "joi": "14.3.1",
   "lzma-native": "4.0.3",
   "rethinkdb-ts": "2.4.0-rc.12",
