@@ -3,6 +3,7 @@
 // External Modules
 import * as Joi from 'joi';
 import { r as RethinkDB } from 'rethinkdb-ts';
+import Config from '@bluecewe/config';
 
 // Internal Modules
 import { RETHINKDB_CONNECTION_OPTIONS } from 'src/Constants';
@@ -12,7 +13,7 @@ import { Connection, RConnectionOptions } from 'rethinkdb-ts';
 export interface Options
 {
     /** RethinkDB connection options. */
-	rethink: RConnectionOptions;
+	rethink: string | RConnectionOptions;
     /** File name of backup to import. Must be .tar.xz file. */
     file: string;
     /** Delete documents and indexes from exisitng tables for which backup data is available. Default: false. */
@@ -33,7 +34,7 @@ export interface TablesFilters extends Array<string> {};
 const OPTIONS_SCHEMA = Joi.object
 	(
 		{
-			rethink: RETHINKDB_CONNECTION_OPTIONS.required(),
+			rethink: Joi.alternatives(Joi.string(), RETHINKDB_CONNECTION_OPTIONS).required(),
 			file: Joi.string().required(),
 			clear: Joi.boolean().default(false),
 			shard: Joi.boolean().default(false),
@@ -63,11 +64,39 @@ export default class Importment
 	/** Connects to RethinkDB. */
 	public async initialise()
 	{
-		this.connection = await RethinkDB.connect(this.options.rethink);
+		let rethinkConnectionOptions: RConnectionOptions;
+		if (typeof this.options.rethink === 'string')
+		{
+			const config = new Config <RConnectionOptions> ({initialise: false, schema: false, file: this.options.rethink});
+			try
+			{
+				await config.initialise();
+			}
+			catch (error)
+			{
+				throw new ConnectionConfigFileError(error);
+			};
+			const data = config.data;
+			rethinkConnectionOptions = data;
+		}
+		else
+		{
+			rethinkConnectionOptions = this.options.rethink;
+		};
+		this.connection = await RethinkDB.connect(rethinkConnectionOptions);
 	};
 	/** Disconnects from RethinkDB. */
 	public async finish()
 	{
 		await this.connection.close();
+	};
+};
+
+export class ConnectionConfigFileError extends Error
+{
+	constructor(error: Error)
+	{
+		const message = 'RethinkDB connection options file error: ' + error.message;
+		super(message);
 	};
 };
