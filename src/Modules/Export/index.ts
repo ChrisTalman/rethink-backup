@@ -26,7 +26,7 @@ export interface Table
 	name: string;
 };
 
-export default async function(options: Options)
+export async function archive(options: Options)
 {
 	const exportment = new Exportment({options});
 	await exportment.initialise();
