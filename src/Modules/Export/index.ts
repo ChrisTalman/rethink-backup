@@ -29,6 +29,10 @@ interface Result
 {
 	fileName: string;
 };
+interface CompressResult
+{
+	fileName: string;
+};
 
 export async function archive(options: Options)
 {
@@ -63,10 +67,10 @@ async function exportDatabases({exportment}: {exportment: Exportment})
 			await exportTable({database, table, directoryPath, exportment});
 		};
 	};
-	await compressDirectory({directoryPath, name: exportName});
+	const { fileName } = await compressDirectory({directoryPath, name: exportName});
 	const result: Result =
 	{
-		fileName: exportName
+		fileName
 	};
 	return result;
 };
@@ -104,6 +108,11 @@ async function compressDirectory({directoryPath, name}: {directoryPath: string, 
 			deleteDirectoryWithContents(directoryPath)
 		]
 	);
+	const result: CompressResult =
+	{
+		fileName: xzFileName
+	};
+	return result;
 };
 
 /** Deletes all files from directory, and then deletes the directory. */
