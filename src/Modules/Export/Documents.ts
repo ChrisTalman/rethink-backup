@@ -15,17 +15,17 @@ import { Table } from './';
 
 export default async function({database, table, directoryPath, exportment}: {database: Database, table: Table, directoryPath: string, exportment: Exportment})
 {
-    const documents = await getIndexes({database, table, exportment});
-    const fileContents = JSON.stringify(documents);
-    const filePath = generateFilePath({database, table, directoryPath, fileName: 'documents'});
-    await writeFile(filePath, fileContents);
+	const documents = await getIndexes({database, table, exportment});
+	const fileContents = JSON.stringify(documents);
+	const filePath = generateFilePath({database, table, directoryPath, fileName: 'documents'});
+	await writeFile(filePath, fileContents);
 };
 
 async function getIndexes({database, table, exportment}: {database: Database, table: Table, exportment: Exportment})
 {
-    const query = RethinkDB
-        .db(database.name)
-        .table(table.name);
-    const documents: Array<any> = await query.run(exportment.connection);
-    return documents;
+	const query = RethinkDB
+		.db(database.name)
+		.table(table.name);
+	const documents: Array<any> = await query.run(exportment.connection);
+	return documents;
 };

@@ -18,79 +18,79 @@ type DatabaseFiltersExpression = RDatum<DatabaseFilters> | RDatum<null>;
 
 export default async function generate({directoryPath, exportment}: {directoryPath: string, exportment: Exportment})
 {
-    const databases = await getDatabases({exportment});
-    const manifest: Manifest =
-    {
-        moduleVersion: MODULE_VERSION,
-        databases
-    };
-    const json = JSON.stringify(manifest);
-    const fileName = 'manifest.json';
-    const filePath = directoryPath + '/' + fileName;
-    await writeFile(filePath, json);
-    return manifest;
+	const databases = await getDatabases({exportment});
+	const manifest: Manifest =
+	{
+		moduleVersion: MODULE_VERSION,
+		databases
+	};
+	const json = JSON.stringify(manifest);
+	const fileName = 'manifest.json';
+	const filePath = directoryPath + '/' + fileName;
+	await writeFile(filePath, json);
+	return manifest;
 };
 
 async function getDatabases({exportment}: {exportment: Exportment})
 {
-    const databaseFilters = getFilters(exportment.options);
-    const query = RethinkDB
-        .db('rethinkdb')
-        .table('db_config')
-        .filter(database => filterDatabase(database, databaseFilters, exportment.options))
-        .merge
-        (
-            (database: RDatum) =>
-            (
-                {
-                    tables: RethinkDB
-                        .db('rethinkdb')
-                        .table('table_config')
-                        .filter({db: database('name')})
-                        .pluck('id', 'name', 'primary_key', 'durability', 'shards')
-                        .merge
-                        (
-                            (table: RDatum) =>
-                            (
-                                {
-                                    shards: table('shards').count(),
-                                    replicas: table('shards').nth(0)('replicas').count()
-                                }
-                            )
-                        )
-                        .coerceTo('array')
-                }
-            )
-        );
-    const tables: Databases = await query.run(exportment.connection);
-    return tables;
+	const databaseFilters = getFilters(exportment.options);
+	const query = RethinkDB
+		.db('rethinkdb')
+		.table('db_config')
+		.filter(database => filterDatabase(database, databaseFilters, exportment.options))
+		.merge
+		(
+			(database: RDatum) =>
+			(
+				{
+					tables: RethinkDB
+						.db('rethinkdb')
+						.table('table_config')
+						.filter({db: database('name')})
+						.pluck('id', 'name', 'primary_key', 'durability', 'shards')
+						.merge
+						(
+							(table: RDatum) =>
+							(
+								{
+									shards: table('shards').count(),
+									replicas: table('shards').nth(0)('replicas').count()
+								}
+							)
+						)
+						.coerceTo('array')
+				}
+			)
+		);
+	const tables: Databases = await query.run(exportment.connection);
+	return tables;
 };
 
 function filterDatabase(database: RDatum, filters: DatabaseFiltersExpression, options: Options)
 {
-    const query = RethinkDB
-        .or
-        (
-            filters.typeOf().eq('NULL'),
-            filters.contains(database('name')).eq('pluck' in options)
-        );
-    return query;
+	const query = RethinkDB
+		.or
+		(
+			filters.typeOf().eq('NULL'),
+			filters.contains(database('name')).eq('pluck' in options)
+		);
+	return query;
 };
 
 function getFilters(options: Options)
 {
-    if (!('pluck' in options) && !('without' in options)) return RethinkDB.expr<null>(null);
-    const filters = ('pluck' in options && options.pluck) || ('without' in options && options.without);
-    const flattened = filters.reduce
-    (
-        (names, databaseVariant) =>
-        {
-            if (typeof databaseVariant === 'string') names.push(databaseVariant);
-            else names.push(... Object.keys(databaseVariant));
-            return names;
-        },
-        [] as Array<string>
-    );
-    const expression: DatabaseFiltersExpression = RethinkDB.expr(flattened);
-    return expression;
+	if (!('pluck' in options) && !('without' in options)) return RethinkDB.expr<null>(null);
+	const filters = ('pluck' in options && options.pluck) || ('without' in options && options.without);
+	const flattened = filters.reduce
+	(
+		(names, databaseVariant) =>
+		{
+			if (typeof databaseVariant === 'string') names.push(databaseVariant);
+			else names.push(... Object.keys(databaseVariant));
+			return names;
+		},
+		[] as Array<string>
+	);
+	const expression: DatabaseFiltersExpression = RethinkDB.expr(flattened);
+	return expression;
 };
