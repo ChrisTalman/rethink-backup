@@ -25,14 +25,19 @@ export interface Table
 	id: string;
 	name: string;
 };
+interface Result
+{
+	fileName: string;
+};
 
 export async function archive(options: Options)
 {
 	const exportment = new Exportment({options});
 	await exportment.initialise();
+	let result: Result;
 	try
 	{
-		await exportDatabases({exportment});
+		result = await exportDatabases({exportment});
 	}
 	catch (error)
 	{
@@ -42,6 +47,7 @@ export async function archive(options: Options)
 	{
 		await exportment.finish();
 	};
+	return result;
 };
 
 async function exportDatabases({exportment}: {exportment: Exportment})
@@ -58,6 +64,11 @@ async function exportDatabases({exportment}: {exportment: Exportment})
 		};
 	};
 	await compressDirectory({directoryPath, name: exportName});
+	const result: Result =
+	{
+		fileName: exportName
+	};
+	return result;
 };
 
 async function exportTable({database, table, directoryPath, exportment}: {database: Database, table: Table, directoryPath: string, exportment: Exportment})

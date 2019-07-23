@@ -4,7 +4,7 @@ import { RConnectionOptions } from 'rethinkdb-ts';
 declare module '@bluecewe/rethink-backup'
 {
 	/** Exports from database. */
-	export function archive(options: ArchiveOptions): Promise<void>;
+	export function archive(options: ArchiveOptions): Promise<ArchiveResult>;
 	export interface ArchiveOptions
 	{
 		/** RethinkDB connection options. */
@@ -18,6 +18,10 @@ declare module '@bluecewe/rethink-backup'
 		[databaseName: string]: TablesFilters;
 	}
 	export interface TablesFilters extends Array<string> {}
+	export interface ArchiveResult
+	{
+		fileName: string;
+	}
 	/** Imports into database. */
 	export function insert(): Promise<void>;
 }
