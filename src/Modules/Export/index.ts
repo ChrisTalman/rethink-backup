@@ -114,7 +114,7 @@ async function compressDirectory({directoryPath, name}: {directoryPath: string, 
 	const result: CompressResult =
 	{
 		fileName: xzFileName,
-		fileExtension: xzFileName.split('.').slice(1).join('')
+		fileExtension: xzFileName.split('.').slice(1).join('.')
 	};
 	return result;
 };

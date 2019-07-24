@@ -1,7 +1,7 @@
 {
  "name": "@bluecewe/rethink-backup",
  "description": "Exports and imports data from RethinkDB.",
- "version": "2.2.0",
+ "version": "2.2.1",
  "repository": {
   "type": "git",
   "url": "https://bitbucket.org/Bluecewe/rethink-backup"
