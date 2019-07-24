@@ -28,10 +28,12 @@ export interface Table
 interface Result
 {
 	fileName: string;
+	fileExtension: string;
 };
 interface CompressResult
 {
 	fileName: string;
+	fileExtension: string;
 };
 
 export async function archive(options: Options)
@@ -67,10 +69,11 @@ async function exportDatabases({exportment}: {exportment: Exportment})
 			await exportTable({database, table, directoryPath, exportment});
 		};
 	};
-	const { fileName } = await compressDirectory({directoryPath, name: exportName});
+	const { fileName, fileExtension } = await compressDirectory({directoryPath, name: exportName});
 	const result: Result =
 	{
-		fileName
+		fileName,
+		fileExtension
 	};
 	return result;
 };
@@ -110,7 +113,8 @@ async function compressDirectory({directoryPath, name}: {directoryPath: string, 
 	);
 	const result: CompressResult =
 	{
-		fileName: xzFileName
+		fileName: xzFileName,
+		fileExtension: xzFileName.split('.').slice(1).join('')
 	};
 	return result;
 };

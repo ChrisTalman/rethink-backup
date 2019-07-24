@@ -21,6 +21,7 @@ declare module '@bluecewe/rethink-backup'
 	export interface ArchiveResult
 	{
 		fileName: string;
+		fileExtension: string;
 	}
 	/** Imports into database. */
 	export function insert(): Promise<void>;
