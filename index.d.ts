@@ -1,7 +1,7 @@
 // Types
 import { RConnectionOptions } from 'rethinkdb-ts';
 
-declare module '@bluecewe/rethink-backup'
+declare module '@ChrisTalman/rethink-backup'
 {
 	/** Exports from database. */
 	export function archive(options: ArchiveOptions): Promise<ArchiveResult>;

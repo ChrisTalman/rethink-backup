@@ -1,13 +1,7 @@
 {
- "name": "@bluecewe/rethink-backup",
+ "name": "@ChrisTalman/rethink-backup",
  "description": "Exports and imports data from RethinkDB.",
  "version": "2.2.1",
- "repository": {
-  "type": "git",
-  "url": "https://bitbucket.org/Bluecewe/rethink-backup"
- },
- "license": "UNLICENSED",
- "private": true,
  "scripts": {
   "build": "./node_modules/.bin/webpack",
   "start-dev": "nodemon index.js --inspect",
@@ -27,8 +21,8 @@
   "webpack-node-externals": "1.7.2"
  },
  "dependencies": {
-  "@bluecewe/config": "bitbucket:bluecewe/config",
-  "@bluecewe/rethink-utilities": "bitbucket:bluecewe/rethink-utilities",
+  "@ChrisTalman/config": "github:ChrisTalman/config",
+  "@ChrisTalman/rethink-utilities": "github:ChrisTalman/rethink-utilities",
   "joi": "14.3.1",
   "lzma-native": "4.0.3",
   "rethinkdb-ts": "2.4.0-rc.12",
