@@ -3,7 +3,7 @@
 // External Modules
 import * as Joi from 'joi';
 import { r as RethinkDB } from 'rethinkdb-ts';
-import Config from '@ChrisTalman/config';
+import Config from '@chris-talman/config';
 
 // Internal Modules
 import { RETHINKDB_CONNECTION_OPTIONS } from 'src/Constants';
