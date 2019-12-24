@@ -1,7 +1,7 @@
 {
- "name": "@ChrisTalman/rethink-backup",
+ "name": "@chris-talman/rethink-backup",
  "description": "Exports and imports data from RethinkDB.",
- "version": "2.2.1",
+ "version": "3.0.1",
  "scripts": {
   "build": "./node_modules/.bin/webpack",
   "start-dev": "nodemon index.js --inspect",
@@ -21,11 +21,11 @@
   "webpack-node-externals": "1.7.2"
  },
  "dependencies": {
-  "@ChrisTalman/config": "github:ChrisTalman/config",
-  "@ChrisTalman/rethink-utilities": "github:ChrisTalman/rethink-utilities",
+  "@chris-talman/config": "3.2.0",
+  "@chris-talman/rethink-utilities": "2.2.4",
   "joi": "14.3.1",
   "lzma-native": "4.0.3",
-  "rethinkdb-ts": "2.4.0-rc.12",
+  "rethinkdb-ts": "2.4.0",
   "tar": "4.4.8",
   "ulid": "2.3.0"
  }
