@@ -22,7 +22,7 @@
  },
  "dependencies": {
   "@chris-talman/config": "3.2.0",
-  "@chris-talman/rethink-utilities": "2.2.4",
+  "@chris-talman/rethink-utilities": "3.2.1",
   "joi": "14.3.1",
   "lzma-native": "5.0.1",
   "rethinkdb-ts": "2.4.0",
