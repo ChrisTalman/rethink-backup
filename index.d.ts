@@ -24,5 +24,18 @@ declare module '@chris-talman/rethink-backup'
 		fileExtension: string;
 	}
 	/** Imports into database. */
-	export function insert(): Promise<void>;
+	export function insert(options: InsertOptions): Promise<void>;
+	export interface InsertOptions
+	{
+		/** RethinkDB connection options. */
+		rethink: string | RConnectionOptions;
+	    /** File name of backup to import. Must be .tar.xz file. */
+	    file: string;
+	    /** Delete documents and indexes from exisitng tables for which backup data is available. Default: false. */
+	    clear?: boolean;
+	    /** Shard tables according to backup data. Default: false. */
+	    shard?: boolean;
+	    /** Replicate tables according to backup data. Default: false. */
+	    replicate?: boolean;
+	}
 }
