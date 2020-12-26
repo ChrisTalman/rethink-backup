@@ -69,7 +69,7 @@ async function exportDatabases({exportment}: {exportment: Exportment})
 			await exportTable({database, table, directoryPath, exportment});
 		};
 	};
-	const { fileName, fileExtension } = await compressDirectory({directoryPath, name: exportName});
+	const { fileName, fileExtension } = await compressDirectory({directoryPath, name: exportName, exportment});
 	const result: Result =
 	{
 		fileName,
@@ -93,11 +93,11 @@ async function createDirectory({name, exportment}: {name: string, exportment: Ex
 };
 
 /** Compresses the given directory, deleting the directory once compressed. */
-async function compressDirectory({directoryPath, name}: {directoryPath: string, name: string})
+async function compressDirectory({directoryPath, name, exportment}: {directoryPath: string, name: string, exportment: Exportment})
 {
-	const tarFileName = `${name}.tar`;
+	const tarFileName = exportment.generateOutputFilePath([`${name}.tar`]);
 	await createTar({file: tarFileName, cwd: directoryPath}, ['./']);
-	const xzFileName = `${tarFileName}.xz`;
+	const xzFileName = exportment.generateOutputFilePath([`${tarFileName}.xz`]);
 	const compressor = createXzCompressor();
 	const readStream = createReadStream(tarFileName);
 	const writeStream = createWriteStream(xzFileName);
