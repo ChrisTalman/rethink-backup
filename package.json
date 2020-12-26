@@ -1,7 +1,7 @@
 {
 	"name": "@chris-talman/rethink-backup",
 	"description": "Exports and imports data from RethinkDB.",
-	"version": "3.1.1",
+	"version": "3.1.2",
 	"scripts": {
 		"build": "./node_modules/.bin/webpack",
 		"start-dev": "nodemon index.js --inspect",

@@ -97,7 +97,7 @@ async function compressDirectory({directoryPath, name, exportment}: {directoryPa
 {
 	const tarFileName = exportment.generateOutputFilePath([`${name}.tar`]);
 	await createTar({file: tarFileName, cwd: directoryPath}, ['./']);
-	const xzFileName = exportment.generateOutputFilePath([`${tarFileName}.xz`]);
+	const xzFileName = `${tarFileName}.xz`;
 	const compressor = createXzCompressor();
 	const readStream = createReadStream(tarFileName);
 	const writeStream = createWriteStream(xzFileName);
