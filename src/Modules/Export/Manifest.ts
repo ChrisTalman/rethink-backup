@@ -72,7 +72,7 @@ function filterDatabase(database: RDatum, filters: DatabaseFiltersExpression, op
 		.or
 		(
 			filters.typeOf().eq('NULL'),
-			filters.contains(database('name')).eq('pluck' in options)
+			(filters as any).contains(database('name')).eq('pluck' in options)
 		);
 	return query;
 };
@@ -91,6 +91,6 @@ function getFilters(options: Options)
 		},
 		[] as Array<string>
 	);
-	const expression: DatabaseFiltersExpression = RethinkDB.expr(flattened);
+	const expression = RethinkDB.expr(flattened) as DatabaseFiltersExpression;
 	return expression;
 };
