@@ -11,6 +11,7 @@ declare module '@chris-talman/rethink-backup'
 		rethink: string | RConnectionOptions;
 		pluck?: DatabaseFilters;
 		without?: DatabaseFilters;
+		outputDirectory?: Array <string>;
 	}
 	export interface DatabaseFilters extends Array<string | DatabaseFiltersObject> {}
 	export interface DatabaseFiltersObject

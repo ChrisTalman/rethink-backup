@@ -1,6 +1,7 @@
 'use strict';
 
 // External Modules
+import * as Path from 'path';
 import * as Joi from 'joi';
 import { r as RethinkDB } from 'rethinkdb-ts';
 import Config from '@chris-talman/config';
@@ -16,6 +17,7 @@ export interface Options
 	rethink: string | RConnectionOptions;
     pluck?: DatabaseFilters;
     without?: DatabaseFilters;
+	outputDirectory?: Array <string>;
 };
 export interface DatabaseFilters extends Array<string | DatabaseFiltersObject> {};
 export interface DatabaseFiltersObject
@@ -34,7 +36,8 @@ const OPTIONS_SCHEMA = Joi.object
 		{
 			rethink: Joi.alternatives(Joi.string(), RETHINKDB_CONNECTION_OPTIONS).required(),
 			pluck: DATABASE_FILTERS.optional(),
-			without: DATABASE_FILTERS.optional()
+			without: DATABASE_FILTERS.optional(),
+			outputDirectory: Joi.array().items(Joi.string()).optional()
 		}
 	)
 	.required()
@@ -44,11 +47,13 @@ const OPTIONS_SCHEMA = Joi.object
 export default class Exportment
 {
     public readonly options: Options;
+	public readonly resolvedOutputDirectorySegments: Options['outputDirectory'];
     public connection: Connection;
 	/** Initialises instance. */
     constructor({options}: {options: Options})
     {
         this.options = this.validateOptions(options);
+		this.resolvedOutputDirectorySegments = this.options.outputDirectory ?? ['.'];
     };
 	/** Validates and transforms options object. */
     private validateOptions(options: Options)
@@ -80,6 +85,12 @@ export default class Exportment
 			rethinkConnectionOptions = this.options.rethink;
 		};
 		this.connection = await RethinkDB.connect(rethinkConnectionOptions);
+	};
+	/** Generates file path for output directory. */
+	public generateOutputFilePath(append: Array <string>)
+	{
+		const path = Path.join(... this.resolvedOutputDirectorySegments, ... append);
+		return path;
 	};
 	/** Disconnects from RethinkDB. */
 	public async finish()

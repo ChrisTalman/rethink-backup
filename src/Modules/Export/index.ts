@@ -60,7 +60,7 @@ async function exportDatabases({exportment}: {exportment: Exportment})
 {
 	const exportId = ulid();
 	const exportName = 'rethinkdb_export_' + exportId;
-	const directoryPath = await createDirectory({name: exportName});
+	const directoryPath = await createDirectory({name: exportName, exportment});
 	const manifest = await generateManifest({directoryPath, exportment});
 	for (let database of manifest.databases)
 	{
@@ -85,9 +85,9 @@ async function exportTable({database, table, directoryPath, exportment}: {databa
 };
 
 /** Creates a directory for the export, and returns its path. */
-async function createDirectory({name}: {name: string})
+async function createDirectory({name, exportment}: {name: string, exportment: Exportment})
 {
-	const path = './' + name;
+	const path = exportment.generateOutputFilePath([name]);
 	await makeDirectory(path);
 	return path;
 };
@@ -95,9 +95,9 @@ async function createDirectory({name}: {name: string})
 /** Compresses the given directory, deleting the directory once compressed. */
 async function compressDirectory({directoryPath, name}: {directoryPath: string, name: string})
 {
-	const tarFileName = name + '.tar';
+	const tarFileName = `${name}.tar`;
 	await createTar({file: tarFileName, cwd: directoryPath}, ['./']);
-	const xzFileName = tarFileName + '.xz';
+	const xzFileName = `${tarFileName}.xz`;
 	const compressor = createXzCompressor();
 	const readStream = createReadStream(tarFileName);
 	const writeStream = createWriteStream(xzFileName);
@@ -123,13 +123,13 @@ async function compressDirectory({directoryPath, name}: {directoryPath: string, 
 async function deleteDirectoryWithContents(directoryPath: string)
 {
 	const directoryFileNames = await getDirectoryFileNames(directoryPath);
-	await Promise.all(directoryFileNames.map(fileName => deleteFile(directoryPath + '/' + fileName)));
+	await Promise.all(directoryFileNames.map(fileName => deleteFile(`${directoryPath}/${fileName}`)));
 	await deleteDirectory(directoryPath);
 };
 
 /** Generates a file path for table files. */
 export function generateFilePath({database, table, directoryPath, fileName}: {database: Database, table: Table, directoryPath: string, fileName: string})
 {
-	const filePath = directoryPath + '/' + database.name + '_' + table.name + '_' + table.id + '_' + fileName + '.json';
+	const filePath = `${directoryPath}/${database.name}_${table.name}_${table.id}_${fileName}.json`;
 	return filePath;
 };
